@@ -17,7 +17,7 @@ function onEdit(e) {
       categorizeTransactions();
     }
   } catch (err) {
-    alert_('[Rules] onEdit error', stringifyError_(err));
+    notifyAlert_('[Rules] onEdit error', stringifyError_(err));
   }
 }
 
@@ -36,7 +36,7 @@ function categorizeTransactions() {
     const rules = readRules_();
     applyRulesToMain_(rules);
   } catch (e) {
-    alert_('[Rules] categorizeTransactions error', stringifyError_(e));
+    notifyAlert_('[Rules] categorizeTransactions error', stringifyError_(e));
     throw e;
   }
 }
