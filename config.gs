@@ -51,32 +51,38 @@ const CONFIGS_BY_HEADER_HASH = {
   // --- EXAMPLES: replace the hashes and headers with your real ones ---
 
   // Chase example
-  'sha256:EXAMPLE_CHASE_HEADER_HASH': {
+  'sha256:b8d252a0bea5609a9ed14d51ae0a214a556c2b949626d1b27c2cfc538544d238': {
     accountName: 'Chase',
     financialInstitutionName: 'Chase Bank',
-    dateFormats: ['MM/dd/yyyy', 'M/d/yyyy'],
-    signConvention: 'raw_sign',
+    dateFormats: ['MM/dd/yyyy'],
+    signConvention: 'expenses_negative',
     mapping: {
-      'Transaction Date': 'date',
+      // 'Details' - this is just 'DEBIT' or 'CREDIT', embedded in the sign of the Amount
+      'Posting Date': 'date',
       'Description': 'description',
-      'Amount': 'amount',
-      'Card Last 4 Digits': 'account_name',
-      'Category': 'category',
-      'Extended Details': 'type'
+      'Amount': 'deposit',
+      'Type': 'type',
+      // 'Balance'
+      'Check or Slip #': 'check_number',
+      'Check or Slip # ': 'check_number'
     }
   },
 
   // Charles Schwab example
-  'sha256:EXAMPLE_SCHWAB_HEADER_HASH': {
+  'sha256:0741502d4e8f7779dc44e8e3b0434bbbd71c57edce8b7fa5c69d9db1ef5d6199': {
     accountName: 'CharlesSchwab',
     financialInstitutionName: 'Charles Schwab Bank',
-    dateFormats: ['MM/dd/yyyy', 'M/d/yyyy'],
+    dateFormats: ['MM/dd/yyyy'],
     signConvention: 'raw_sign',
     mapping: {
       'Date': 'date',
+      // 'Status': , posted/pending
+      'Type': 'type',
+      'CheckNumber': 'check_number',
       'Description': 'description',
-      'Amount': 'amount',
-      'Account Number': 'account_name'
+      'Withdrawal': 'withdrawal',
+      'Deposit': 'deposit',
+      // 'RunningBalance'
     }
   }
 };
