@@ -90,10 +90,6 @@ function mapCsvRowsToTarget_(rows, header, cfg, sourceFileName) {
     try {
       const rec = emptyTargetRecord_();
 
-      // Institution labels
-      rec.institution = cfg.name || '';
-      rec.financial_institution_name = cfg.financialInstitutionName || cfg.name || '';
-
       rec.source_file = sourceFileName;
 
       // Map columns
@@ -103,22 +99,20 @@ function mapCsvRowsToTarget_(rows, header, cfg, sourceFileName) {
         rec[targetField] = String(raw[idx]).trim();
       }
 
-      // Normalize date & amount
+      // Normalize date & monetary fields
       rec.date = parseDateFlexible_(rec.date, cfg.dateFormats);
-      rec.amount = normalizeAmount_(rec.amount, cfg.signConvention);
+      normalizeMonetaryFields_(rec, cfg);
 
       // Standardize strings
       rec.description = rec.description || '';
-      rec.account = rec.account || '';
+      rec.account_name = rec.account_name || (cfg.accountName || '');
+      rec.financial_institution = rec.financial_institution || (cfg.financialInstitutionName || '');
+      rec.type = rec.type || '';
+      rec.check_number = rec.check_number || '';
+      rec.category = rec.category || '';
 
       // Build a base key for within-CSV duplicate detection (without any duplicate prefix)
-      const baseKey = buildKey_({
-        date: rec.date,
-        amount: rec.amount,
-        description: rec.description,
-        account: rec.account,
-        institution: rec.institution
-      });
+      const baseKey = buildKey_(rec);
 
       if (seenWithinCsv.has(baseKey)) {
         // Duplicate inside this CSV: prepend configured flag to description
@@ -177,13 +171,51 @@ function normalizeAmount_(value, signConvention) {
   return n; // 'raw_sign'
 }
 
+function normalizeMonetaryFields_(rec, cfg) {
+  const hasWithdrawal = String(rec.withdrawal || '').trim() !== '';
+  const hasDeposit = String(rec.deposit || '').trim() !== '';
+  if (hasWithdrawal) {
+    const withdrawal = Math.abs(normalizeAmount_(rec.withdrawal, 'raw_sign'));
+    rec.withdrawal = withdrawal === 0 ? '' : withdrawal;
+  } else {
+    rec.withdrawal = '';
+  }
+
+  if (hasDeposit) {
+    const deposit = Math.abs(normalizeAmount_(rec.deposit, 'raw_sign'));
+    rec.deposit = deposit === 0 ? '' : deposit;
+  } else {
+    rec.deposit = '';
+  }
+
+  const amountSource = String(rec.amount || '').trim();
+  if (!hasWithdrawal && !hasDeposit && amountSource !== '') {
+    const amount = normalizeAmount_(amountSource, cfg.signConvention);
+    if (amount < 0) {
+      const value = Math.abs(amount);
+      rec.withdrawal = value === 0 ? '' : value;
+      rec.deposit = '';
+    } else if (amount > 0) {
+      const value = Math.abs(amount);
+      rec.deposit = value === 0 ? '' : value;
+      rec.withdrawal = '';
+    } else {
+      rec.withdrawal = '';
+      rec.deposit = '';
+    }
+  }
+
+  delete rec.amount;
+}
+
 function buildKey_(rec) {
   const date = rec.date;
-  const amt = Number(rec.amount).toFixed(2);
+  const deposit = Number(rec.deposit || 0).toFixed(2);
+  const withdrawal = Number(rec.withdrawal || 0).toFixed(2);
   const desc = (rec.description || '').toLowerCase().replace(/\s+/g, ' ').trim();
-  const acct = (rec.account || '').toLowerCase().trim();
-  const inst = (rec.institution || '').toLowerCase().trim();
-  return [date, amt, desc, acct, inst].join(' | ');
+  const acct = (rec.account_name || '').toLowerCase().trim();
+  const type = (rec.type || '').toLowerCase().trim();
+  return [date, withdrawal, deposit, desc, acct, type].join(' | ');
 }
 
 function buildExistingKeySet_(sheet) {
@@ -192,20 +224,22 @@ function buildExistingKeySet_(sheet) {
   const header = values[0];
   const idx = {
     date: header.indexOf('date'),
-    amount: header.indexOf('amount'),
+    withdrawal: header.indexOf('withdrawal'),
+    deposit: header.indexOf('deposit'),
     description: header.indexOf('description'),
-    account: header.indexOf('account'),
-    institution: header.indexOf('institution')
+    account: header.indexOf('account_name'),
+    type: header.indexOf('type')
   };
   const set = new Set();
   for (let i = 1; i < values.length; i++) {
     const row = values[i];
     const rec = {
-      date: row[idx.date],
-      amount: row[idx.amount],
-      description: row[idx.description],
-      account: row[idx.account],
-      institution: row[idx.institution]
+      date: idx.date === -1 ? '' : row[idx.date],
+      withdrawal: idx.withdrawal === -1 ? '' : row[idx.withdrawal],
+      deposit: idx.deposit === -1 ? '' : row[idx.deposit],
+      description: idx.description === -1 ? '' : row[idx.description],
+      account_name: idx.account === -1 ? '' : row[idx.account],
+      type: idx.type === -1 ? '' : row[idx.type]
     };
     set.add(buildKey_(rec));
   }
