@@ -66,6 +66,14 @@ function processSingleCSVFile_(file, existingKeysSet) {
     appendRecords_(deduped);
     deduped.forEach(r => existingKeysSet.add(buildKey_(r)));
 
+    if (mapped.errors.length) {
+      return {
+        ok: false,
+        rowsAppended: deduped.length,
+        reason: `${mapped.errors.length} row(s) failed to map; CSV retained in RAW`
+      };
+    }
+
     return { ok: true, rowsAppended: deduped.length, reason: '' };
   } catch (e) {
     alert_(`[CSV Import] Exception for "${file.getName()}"`, stringifyError_(e));
