@@ -1,6 +1,12 @@
 # Transactions Aggregation (Apps Script)
 
-This project bundles a modular Google Apps Script that ingests bank-export CSVs from Google Drive, normalizes them into a single ledger tab, applies categorization rules, and optionally alerts when something looks off.
+Modular Google Apps Script to:
+- Ingest CSVs from a Google Drive folder
+- Normalize to a unified schema (per-source column mapping)
+- Deduplicate and append into a single “Transactions” sheet
+- Apply rules (regex + net amount range) to assign categories
+- Alert via email on unknown CSV headers or errors
+
 
 ## Features
 - Pull CSV files from a "raw" Drive folder, normalize column names, and append to a `Transactions` sheet without duplicates.
@@ -64,8 +70,7 @@ with open(sys.argv[1], newline='', encoding='utf-8') as fh:
 normalized = '|'.join(' '.join(col.split()).lower() for col in header)
 print('sha256:' + hashlib.sha256(normalized.encode('utf-8')).hexdigest())
 PY path/to/sample.csv
-```
-This script mirrors the `headerHash_` helper in `config.gs`, so the digest will match what the Apps Script computes.
+
 
 ## Running the ingestion and rules
 - Run `ingestAllCSVs()` to pull any CSVs in the RAW folder, normalize the rows, append them to the sheet, and (optionally) move the processed files into the archive folder. Any headers without a matching hash produce an email alert and stop ingestion until you add a mapping.
