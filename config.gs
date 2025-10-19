@@ -16,14 +16,15 @@ const CFG = {
 
   // --- Unified schema for the Transactions sheet (header row) ---
   TARGET_SCHEMA: [
+    'account_name',
+    'financial_institution',
     'date',
-    'amount',
+    'type',
     'description',
-    'account',
-    'institution',
-    'financial_institution_name',
+    'withdrawal',
+    'deposit',
+    'check_number',
     'category',
-    'raw_memo',
     'source_file'
   ],
 
@@ -36,10 +37,12 @@ const CFG = {
  * Each entry:
  * {
  *   financialInstitutionName: 'Readable name for the bank/issuer',
- *   name: 'Internal short label for debugging/logging',
+ *   accountName: 'Internal short label for debugging/logging',
  *   dateFormats: ['MM/dd/yyyy','M/d/yyyy'],
  *   signConvention: 'raw_sign' | 'expenses_negative',
  *   mapping: { 'Source Header' : 'target_field_in_CFG.TARGET_SCHEMA' }
+ *     • You can also map to helper fields like 'amount'; ingestion will split
+ *       the value into `deposit`/`withdrawal` columns.
  * }
  *
  * Fill these by first running logHeaderHashForAFile() after dropping a sample CSV in RAW.
@@ -49,7 +52,7 @@ const CONFIGS_BY_HEADER_HASH = {
 
   // Chase example
   'sha256:EXAMPLE_CHASE_HEADER_HASH': {
-    name: 'Chase',
+    accountName: 'Chase',
     financialInstitutionName: 'Chase Bank',
     dateFormats: ['MM/dd/yyyy', 'M/d/yyyy'],
     signConvention: 'raw_sign',
@@ -57,15 +60,15 @@ const CONFIGS_BY_HEADER_HASH = {
       'Transaction Date': 'date',
       'Description': 'description',
       'Amount': 'amount',
-      'Card Last 4 Digits': 'account',
+      'Card Last 4 Digits': 'account_name',
       'Category': 'category',
-      'Extended Details': 'raw_memo'
+      'Extended Details': 'type'
     }
   },
 
   // Charles Schwab example
   'sha256:EXAMPLE_SCHWAB_HEADER_HASH': {
-    name: 'CharlesSchwab',
+    accountName: 'CharlesSchwab',
     financialInstitutionName: 'Charles Schwab Bank',
     dateFormats: ['MM/dd/yyyy', 'M/d/yyyy'],
     signConvention: 'raw_sign',
@@ -73,7 +76,7 @@ const CONFIGS_BY_HEADER_HASH = {
       'Date': 'date',
       'Description': 'description',
       'Amount': 'amount',
-      'Account Number': 'account'
+      'Account Number': 'account_name'
     }
   }
 };

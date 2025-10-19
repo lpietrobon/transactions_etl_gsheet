@@ -76,7 +76,8 @@ function applyRulesToMain_(rules) {
   const header = vals[0];
   const idx = {
     desc: header.indexOf('description'),
-    amt: header.indexOf('amount'),
+    withdrawal: header.indexOf('withdrawal'),
+    deposit: header.indexOf('deposit'),
     catByRule: header.indexOf('category'),
     // add these two columns to your sheet if you'd like separate audit columns:
     catAudit: header.indexOf('Category by Rule'),
@@ -98,7 +99,9 @@ function applyRulesToMain_(rules) {
   for (let r = 0; r < dataRows.length; r++) {
     const row = dataRows[r];
     const description = String(row[idx.desc] || '');
-    const amount = Number(row[idx.amt] || 0);
+    const withdrawal = idx.withdrawal === -1 ? 0 : Number(row[idx.withdrawal] || 0);
+    const deposit = idx.deposit === -1 ? 0 : Number(row[idx.deposit] || 0);
+    const amount = deposit - withdrawal;
 
     // Find first matching rule
     let matched = null;

@@ -4,13 +4,21 @@ Modular Google Apps Script to:
 - Ingest CSVs from a Google Drive folder
 - Normalize to a unified schema (per-source column mapping)
 - Deduplicate and append into a single “Transactions” sheet
-- Apply rules (regex + amount range) to assign categories
+- Apply rules (regex + net amount range) to assign categories
 - Alert via email on unknown CSV headers or errors
+
+## Target schema
+
+The Transactions sheet uses the following header order:
+
+```
+account_name, date, type, description, withdrawal, deposit, check_number, category, source_file
+```
 
 ## Files
 - `config.gs` — All hardcoded config: folder IDs, tab names, target schema, and per-source mappings keyed by a header hash.
 - `alerting.gs` — Email alerts (`alert_(subject, body)`), simple logging.
-- `ingestion.gs` — `ingestAllCSVs()` plus mapping, date/amount normalization, dedupe, and archive move.
+- `ingestion.gs` — `ingestAllCSVs()` plus mapping, date/net-amount normalization, dedupe, and archive move.
 - `rules.gs` — `categorizeTransactions()` + `onEdit(e)` and optional `installTriggers()`.
 
 ## Setup
