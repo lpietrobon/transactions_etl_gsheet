@@ -136,3 +136,33 @@ function escapeHtml_(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+
+/**
+ * Helper wrappers that gracefully fall back to console logging when the
+ * optional alerting utilities are not loaded in the Apps Script project.
+ */
+function notifyAlert_(subject, body) {
+  if (typeof alert_ === 'function') {
+    try {
+      alert_(subject, body);
+      return;
+    } catch (err) {
+      console.error('[Alert fallback] Failed to send alert via alert_');
+      console.error(stringifyError_(err));
+    }
+  }
+  console.log(`[ALERT] ${subject}\n${body}`);
+}
+
+function notifyInfo_(msg) {
+  if (typeof logInfo_ === 'function') {
+    try {
+      logInfo_(msg);
+      return;
+    } catch (err) {
+      console.error('[Log fallback] Failed to log via logInfo_');
+      console.error(stringifyError_(err));
+    }
+  }
+  console.log(msg);
+}

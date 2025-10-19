@@ -29,15 +29,15 @@ function ingestAllCSVs() {
     }
 
     if (problems.length) {
-      alert_('[CSV Import] Some files could not be mapped', problems.join('\n'));
+      notifyAlert_('[CSV Import] Some files could not be mapped', problems.join('\n'));
     }
     if (processed.length) {
-      logInfo_('[CSV Import] Done:\n' + processed.map(n => `• ${n}: ${counts[n]} new rows`).join('\n'));
+      notifyInfo_('[CSV Import] Done:\n' + processed.map(n => `• ${n}: ${counts[n]} new rows`).join('\n'));
     } else {
-      logInfo_('[CSV Import] No CSVs found.');
+      notifyInfo_('[CSV Import] No CSVs found.');
     }
   } catch (e) {
-    alert_('[CSV Import] Fatal error', stringifyError_(e));
+    notifyAlert_('[CSV Import] Fatal error', stringifyError_(e));
     throw e;
   }
 }
@@ -59,7 +59,7 @@ function processSingleCSVFile_(file, existingKeysSet) {
 
     const mapped = mapCsvRowsToTarget_(rows, header, cfg, file.getName());
     if (mapped.errors.length) {
-      alert_(`[CSV Import] Row mapping issues in ${file.getName()}`, mapped.errors.slice(0, 30).join('\n'));
+      notifyAlert_(`[CSV Import] Row mapping issues in ${file.getName()}`, mapped.errors.slice(0, 30).join('\n'));
     }
 
     const deduped = mapped.records.filter(r => !existingKeysSet.has(buildKey_(r)));
@@ -68,7 +68,7 @@ function processSingleCSVFile_(file, existingKeysSet) {
 
     return { ok: true, rowsAppended: deduped.length, reason: '' };
   } catch (e) {
-    alert_(`[CSV Import] Exception for "${file.getName()}"`, stringifyError_(e));
+    notifyAlert_(`[CSV Import] Exception for "${file.getName()}"`, stringifyError_(e));
     return { ok: false, rowsAppended: 0, reason: 'Exception thrown; see alert' };
   }
 }
@@ -269,7 +269,7 @@ function moveToArchiveIfConfigured_(file) {
     const parents = file.getParents();
     if (parents.hasNext()) parents.next().removeFile(file);
   } catch (e) {
-    alert_('[CSV Import] Failed to archive file', `${file.getName()}\n\n${stringifyError_(e)}`);
+    notifyAlert_('[CSV Import] Failed to archive file', `${file.getName()}\n\n${stringifyError_(e)}`);
   }
 }
 
