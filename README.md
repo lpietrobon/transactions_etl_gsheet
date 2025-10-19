@@ -70,7 +70,7 @@ with open(sys.argv[1], newline='', encoding='utf-8') as fh:
 normalized = '|'.join(' '.join(col.split()).lower() for col in header)
 print('sha256:' + hashlib.sha256(normalized.encode('utf-8')).hexdigest())
 PY path/to/sample.csv
-
+```
 
 ## Running the ingestion and rules
 - Run `ingestAllCSVs()` to pull any CSVs in the RAW folder, normalize the rows, append them to the sheet, and (optionally) move the processed files into the archive folder. Any headers without a matching hash produce an email alert and stop ingestion until you add a mapping.
