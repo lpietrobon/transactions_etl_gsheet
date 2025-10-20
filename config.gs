@@ -44,6 +44,9 @@ const CFG = {
  *     • You can also map to helper fields like 'amount'; ingestion will split
  *       the value into `deposit`/`withdrawal` columns.
  * }
+ * 
+ * `signConvention` only comes into play when the source header is mapped to the helper field amount
+ * In that case, the parser reads the signed value according to the configured convention and then chooses which target column to populate: a negative number goes to withdrawal, a positive number goes to deposit
  *
  * Fill these by first running logHeaderHashForAFile() after dropping a sample CSV in RAW.
  */
