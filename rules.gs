@@ -2,7 +2,7 @@
 
 /**
  * Columns expected in Rules sheet (row 1 headers):
- * Rule ID | Description Regex | Min Amount | Max Amount | Category
+ * Rule ID | Status | Description Regex | Min Amount | Max Amount | Category
  *
  * Empty cells mean "no constraint" for that criterion.
  */
@@ -46,23 +46,42 @@ function readRules_() {
   const values = sh.getDataRange().getValues();
   if (values.length <= 1) return [];
   const hdr = values[0].map(h => String(h).trim());
-  const idx = {
-    id: hdr.indexOf('Rule ID'),
-    regex: hdr.indexOf('Description Regex'),
-    minAmt: hdr.indexOf('Min Amount'),
-    maxAmt: hdr.indexOf('Max Amount'),
-    category: hdr.indexOf('Category')
-  };
+  const columns = [
+    ['id', 'Rule ID'],
+    ['status', 'Status'],
+    ['regex', 'Description Regex'],
+    ['minAmt', 'Min Amount'],
+    ['maxAmt', 'Max Amount'],
+    ['category', 'Category']
+  ];
+  const idx = {};
+  const missing = [];
+  for (const [key, label] of columns) {
+    const position = hdr.indexOf(label);
+    if (position === -1) {
+      missing.push(label);
+    }
+    idx[key] = position;
+  }
+  if (missing.length) {
+    throw new Error('Rules sheet missing required column(s): ' + missing.join(', '));
+  }
   const list = [];
   for (let i = 1; i < values.length; i++) {
     const row = values[i];
     if (row.every(c => String(c).trim() === '')) continue;
+    const status = String(row[idx.status] || '').trim().toUpperCase();
+    if (status !== 'ON') continue;
+    const categoryCell = String(row[idx.category] || '').trim();
+    if (!categoryCell) continue;
+    const minStr = String(row[idx.minAmt] ?? '').trim();
+    const maxStr = String(row[idx.maxAmt] ?? '').trim();
     list.push({
-      id: row[idx.id],
-      descriptionRegex: row[idx.regex] || '',
-      minAmount: row[idx.minAmt] === '' ? null : parseFloat(row[idx.minAmt]),
-      maxAmount: row[idx.maxAmt] === '' ? null : parseFloat(row[idx.maxAmt]),
-      category: row[idx.category]
+      id: String(row[idx.id] || '').trim(),
+      descriptionRegex: String(row[idx.regex] || '').trim(),
+      minAmount: minStr === '' ? null : parseFloat(minStr),
+      maxAmount: maxStr === '' ? null : parseFloat(maxStr),
+      category: categoryCell
     });
   }
   return list;
