@@ -28,9 +28,9 @@ Modular Google Apps Script to:
 1. Create a spreadsheet (for example, **Transactions ETL**).
 2. Add/rename a tab to match `CFG.TARGET_SHEET_NAME` (default `Transactions`). Leave it empty; the script will write the header defined in `CFG.TARGET_SCHEMA` on first run.
 3. Add another tab named `Rules` (or adjust `CFG.RULES_SHEET_NAME`). The header row must contain exactly:
-   
-   | Rule ID | Description Regex | Min Amount | Max Amount | Category |
-   |---------|-------------------|------------|------------|----------|
+
+   | Rule ID | Status | Description Regex | Min Amount | Max Amount | Category |
+   |---------|--------|-------------------|------------|------------|----------|
    
    You may leave data rows blank until you build rules. The script will automatically add audit columns (`Category by Rule`, `Matched Rule ID`) if they are missing.
 4. (Optional) Create extra columns in the `Transactions` sheet if you want to store human-curated categories separate from the rule-driven ones—the ingestion step preserves any columns not defined in the target schema.
