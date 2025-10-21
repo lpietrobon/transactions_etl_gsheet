@@ -99,9 +99,9 @@ function applyRulesToMain_(rules) {
   for (let r = 0; r < dataRows.length; r++) {
     const row = dataRows[r];
     const description = String(row[idx.desc] || '');
-    const withdrawal = idx.withdrawal === -1 ? 0 : Number(row[idx.withdrawal] || 0);
-    const deposit = idx.deposit === -1 ? 0 : Number(row[idx.deposit] || 0);
-    const amount = deposit - withdrawal;
+    const withdrawalAmount = idx.withdrawal === -1 ? 0 : Number(row[idx.withdrawal] || 0);
+    const depositAmount = idx.deposit === -1 ? 0 : Number(row[idx.deposit] || 0);
+    const magnitude = Math.abs(depositAmount - withdrawalAmount);
 
     // Find first matching rule
     let matched = null;
@@ -112,8 +112,8 @@ function applyRulesToMain_(rules) {
         if (!re.test(description)) continue;
       }
       // Amount range (optional)
-      if (rule.minAmount != null && amount < rule.minAmount) continue;
-      if (rule.maxAmount != null && amount > rule.maxAmount) continue;
+      if (rule.minAmount != null && magnitude < rule.minAmount) continue;
+      if (rule.maxAmount != null && magnitude > rule.maxAmount) continue;
 
       matched = rule;
       break; // first match wins
