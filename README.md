@@ -77,6 +77,10 @@ PY path/to/sample.csv
 - Run `categorizeTransactions()` to reapply your rules. The simple `onEdit(e)` trigger will call it automatically when you edit the `Rules` tab or new transactions arrive.
 - Call `installTriggers()` from `rules.gs` if you want time-based triggers that ingest and categorize hourly.
 
+## Testing
+- Continuous integration runs `npm test` on every pull request. If you change ingestion or rules logic, add or update the corresponding tests so the workflow stays green.
+- Locally, install dependencies with `npm ci` and run `npm test` before opening a pull request.
+
 ## Maintenance tips
 - If ingestion fails, check the execution log and the alert email for the stack trace provided by `alerting.gs`.
 - When you update the target schema, update both the sheet header row and every mapping in `CONFIGS_BY_HEADER_HASH` to include the new columns.
