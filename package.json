@@ -2,6 +2,7 @@
   "name": "transactions_etl_gsheet",
   "version": "1.0.0",
   "type": "commonjs",
+  "description": "Modular Google Apps Script project for ingesting CSVs, normalizing them, and alerting on rule exceptions.",
   "scripts": {
     "test": "node --test"
   }
