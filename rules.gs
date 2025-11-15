@@ -2,7 +2,7 @@
 
 /**
  * Columns expected in Rules sheet (row 1 headers):
- * Rule ID | Status | Description Regex | Min Amount | Max Amount | Category
+ * Rule ID | Status | Description Regex | Type Regex | Category Regex | AccountName Regex | Min Amount | Max Amount | Category Assigned by Rule
  *
  * Empty cells mean "no constraint" for that criterion.
  */
@@ -49,10 +49,13 @@ function readRules_() {
   const columns = [
     ['id', 'Rule ID'],
     ['status', 'Status'],
-    ['regex', 'Description Regex'],
+    ['descriptionRegex', 'Description Regex'],
+    ['typeRegex', 'Type Regex'],
+    ['categoryRegex', 'Category Regex'],
+    ['accountNameRegex', 'AccountName Regex'],
     ['minAmt', 'Min Amount'],
     ['maxAmt', 'Max Amount'],
-    ['category', 'Category']
+    ['category', 'Category Assigned by Rule']
   ];
   const idx = {};
   const missing = [];
@@ -76,15 +79,35 @@ function readRules_() {
     if (!categoryCell) continue;
     const minStr = String(row[idx.minAmt] ?? '').trim();
     const maxStr = String(row[idx.maxAmt] ?? '').trim();
+    const ruleId = String(row[idx.id] || '').trim();
+
+    const descriptionPattern = String(row[idx.descriptionRegex] || '').trim();
+    const typePattern = String(row[idx.typeRegex] || '').trim();
+    const categoryPattern = String(row[idx.categoryRegex] || '').trim();
+    const accountNamePattern = String(row[idx.accountNameRegex] || '').trim();
+
     list.push({
-      id: String(row[idx.id] || '').trim(),
-      descriptionRegex: String(row[idx.regex] || '').trim(),
+      id: ruleId,
+      descriptionRegex: compileRuleRegex_(descriptionPattern, 'Description Regex', ruleId),
+      typeRegex: compileRuleRegex_(typePattern, 'Type Regex', ruleId),
+      categoryRegex: compileRuleRegex_(categoryPattern, 'Category Regex', ruleId),
+      accountNameRegex: compileRuleRegex_(accountNamePattern, 'AccountName Regex', ruleId),
       minAmount: minStr === '' ? null : parseFloat(minStr),
       maxAmount: maxStr === '' ? null : parseFloat(maxStr),
       category: categoryCell
     });
   }
   return list;
+}
+
+function compileRuleRegex_(pattern, label, ruleId) {
+  if (!pattern) return null;
+  try {
+    return new RegExp(pattern, 'i');
+  } catch (err) {
+    const idText = ruleId ? ` (Rule ID: ${ruleId})` : '';
+    throw new Error(`Invalid ${label}${idText}: ${err.message}`);
+  }
 }
 
 function applyRulesToMain_(rules) {
@@ -95,9 +118,11 @@ function applyRulesToMain_(rules) {
   const header = vals[0];
   const idx = {
     desc: header.indexOf('description'),
+    txnType: header.indexOf('type'),
+    txnCategory: header.indexOf('category'),
+    accountName: header.indexOf('account_name'),
     withdrawal: header.indexOf('withdrawal'),
     deposit: header.indexOf('deposit'),
-    catByRule: header.indexOf('category'),
     // add these two columns to your sheet if you'd like separate audit columns:
     catAudit: header.indexOf('Category by Rule'),
     ruleAudit: header.indexOf('Matched Rule ID')
@@ -118,6 +143,9 @@ function applyRulesToMain_(rules) {
   for (let r = 0; r < dataRows.length; r++) {
     const row = dataRows[r];
     const description = String(row[idx.desc] || '');
+    const txnType = idx.txnType === -1 ? '' : String(row[idx.txnType] || '');
+    const txnCategory = idx.txnCategory === -1 ? '' : String(row[idx.txnCategory] || '');
+    const accountName = idx.accountName === -1 ? '' : String(row[idx.accountName] || '');
     const withdrawal = idx.withdrawal === -1 ? 0 : Number(row[idx.withdrawal] || 0);
     const deposit = idx.deposit === -1 ? 0 : Number(row[idx.deposit] || 0);
     const signedAmount = deposit - withdrawal;
@@ -126,11 +154,11 @@ function applyRulesToMain_(rules) {
     // Find first matching rule
     let matched = null;
     for (const rule of rules) {
-      // Description regex (optional)
-      if (rule.descriptionRegex && rule.descriptionRegex.trim() !== '') {
-        const re = new RegExp(rule.descriptionRegex, 'i');
-        if (!re.test(description)) continue;
-      }
+      // Regex filters (optional)
+      if (rule.descriptionRegex && !rule.descriptionRegex.test(description)) continue;
+      if (rule.typeRegex && !rule.typeRegex.test(txnType)) continue;
+      if (rule.categoryRegex && !rule.categoryRegex.test(txnCategory)) continue;
+      if (rule.accountNameRegex && !rule.accountNameRegex.test(accountName)) continue;
       // Amount range (optional)
       if (rule.minAmount != null && magnitude < rule.minAmount) continue;
       if (rule.maxAmount != null && magnitude > rule.maxAmount) continue;
