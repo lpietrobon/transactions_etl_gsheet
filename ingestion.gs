@@ -209,13 +209,20 @@ function normalizeMonetaryFields_(rec, cfg) {
 }
 
 function buildKey_(rec) {
-  const date = rec.date;
+  const date = normalizeDateForKey_(rec.date);
   const deposit = Number(rec.deposit || 0).toFixed(2);
   const withdrawal = Number(rec.withdrawal || 0).toFixed(2);
   const desc = (rec.description || '').toLowerCase().replace(/\s+/g, ' ').trim();
   const acct = (rec.account_name || '').toLowerCase().trim();
   const type = (rec.type || '').toLowerCase().trim();
   return [date, withdrawal, deposit, desc, acct, type].join(' | ');
+}
+
+function normalizeDateForKey_(value) {
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    return formatISODate_(value);
+  }
+  return String(value || '').trim();
 }
 
 function buildExistingKeySet_(sheet) {
