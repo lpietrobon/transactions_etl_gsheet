@@ -157,4 +157,50 @@ describe("buildRowsFromCsvData", () => {
 
     expect(result.rowsToAppend).toHaveLength(0);
   });
+
+  it("maps rows into schema columns with formatted dates and source file", () => {
+    const csvData = [
+      ["Date", "Description", "Amount"],
+      ["2024-02-01", "Paycheck", "100.00"],
+      ["2024-02-02", "Groceries", "-45.25"]
+    ];
+    const sourceIndex = createHeaderIndex(csvData[0] as string[]);
+    const config: CsvConfig = {
+      dateFormat: "yyyy-MM-dd",
+      amountColumn: "Amount",
+      signConvention: "positive_deposit",
+      columnMap: {
+        Date: "Date",
+        Description: "Description"
+      }
+    };
+    const prepared = prepareCsvConfig(config, sourceIndex);
+
+    const table = new Table(TARGET_SCHEMA);
+    const result = buildRowsFromCsvData({
+      csvData,
+      config: prepared,
+      sourceFile: "bank.csv",
+      now: new Date("2024-02-03T00:00:00Z"),
+      timeZone: "UTC",
+      existingKeys: new Set(),
+      table
+    });
+
+    expect(result.rowsToAppend).toHaveLength(2);
+    const dateIndex = table.getIndex("Date");
+    const withdrawalIndex = table.getIndex("Withdrawal");
+    const depositIndex = table.getIndex("Deposit");
+    const sourceFileIndex = table.getIndex("Source File");
+
+    expect(result.rowsToAppend[0][dateIndex]).toBe("2024-02-01");
+    expect(result.rowsToAppend[0][depositIndex]).toBe(100);
+    expect(result.rowsToAppend[0][withdrawalIndex]).toBe(0);
+    expect(result.rowsToAppend[0][sourceFileIndex]).toBe("bank.csv");
+
+    expect(result.rowsToAppend[1][dateIndex]).toBe("2024-02-02");
+    expect(result.rowsToAppend[1][depositIndex]).toBe(0);
+    expect(result.rowsToAppend[1][withdrawalIndex]).toBe(45.25);
+    expect(result.rowsToAppend[1][sourceFileIndex]).toBe("bank.csv");
+  });
 });
