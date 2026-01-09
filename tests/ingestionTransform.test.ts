@@ -1,7 +1,33 @@
 import { generateCompositeKey } from "../src/core";
-import { buildRowsFromCsvData, mapRowToRecord } from "../src/ingestionTransform";
+import { buildRowsFromCsvData, mapRowToRecord, prepareCsvConfig } from "../src/ingestionTransform";
 import { TARGET_SCHEMA } from "../src/config";
 import { createHeaderIndex } from "../src/sheets";
+
+describe("prepareCsvConfig", () => {
+  it("builds column index mappings and amount indices", () => {
+    const headers = ["Date", "Description", "Amount", "Deposit"];
+    const sourceIndex = createHeaderIndex(headers);
+    const config = {
+      dateFormat: "yyyy-MM-dd",
+      amountColumn: "Amount",
+      depositColumn: "Deposit",
+      signConvention: "positive_deposit",
+      columnMap: {
+        Date: "Date",
+        Description: "Description"
+      }
+    };
+
+    const prepared = prepareCsvConfig(config, sourceIndex);
+
+    expect(prepared.columnMapIndex).toEqual({
+      Date: sourceIndex["date"],
+      Description: sourceIndex["description"]
+    });
+    expect(prepared.amountColumnIndex).toBe(sourceIndex["amount"]);
+    expect(prepared.depositColumnIndex).toBe(sourceIndex["deposit"]);
+  });
+});
 
 describe("mapRowToRecord", () => {
   it("maps amounts using positive_deposit convention", () => {
@@ -17,11 +43,13 @@ describe("mapRowToRecord", () => {
       }
     };
 
+    const prepared = prepareCsvConfig(config, sourceIndex);
+
     const record = mapRowToRecord([
       "2024-01-02",
       "Coffee",
       "-12.50"
-    ], sourceIndex, config, "file.csv", new Date("2024-01-03T00:00:00Z"), "UTC");
+    ], prepared, "file.csv", new Date("2024-01-03T00:00:00Z"), "UTC");
 
     expect(record.withdrawal).toBe(12.5);
     expect(record.deposit).toBe(0);
@@ -41,11 +69,13 @@ describe("mapRowToRecord", () => {
       }
     };
 
+    const prepared = prepareCsvConfig(config, sourceIndex);
+
     const record = mapRowToRecord([
       "2024-01-02",
       "Refund",
       "-20.00"
-    ], sourceIndex, config, "file.csv", new Date("2024-01-03T00:00:00Z"), "UTC");
+    ], prepared, "file.csv", new Date("2024-01-03T00:00:00Z"), "UTC");
 
     expect(record.withdrawal).toBe(0);
     expect(record.deposit).toBe(20);
@@ -69,12 +99,12 @@ describe("buildRowsFromCsvData", () => {
         Description: "Description"
       }
     };
+    const prepared = prepareCsvConfig(config, sourceIndex);
 
     const headerIndex = createHeaderIndex(TARGET_SCHEMA);
     const result = buildRowsFromCsvData({
       csvData,
-      sourceIndex,
-      config,
+      config: prepared,
       sourceFile: "file.csv",
       now: new Date("2024-01-06T00:00:00Z"),
       timeZone: "UTC",
@@ -103,6 +133,7 @@ describe("buildRowsFromCsvData", () => {
         Description: "Description"
       }
     };
+    const prepared = prepareCsvConfig(config, sourceIndex);
 
     const recordKey = generateCompositeKey({
       date: "2024-01-05",
@@ -116,8 +147,7 @@ describe("buildRowsFromCsvData", () => {
     const headerIndex = createHeaderIndex(TARGET_SCHEMA);
     const result = buildRowsFromCsvData({
       csvData,
-      sourceIndex,
-      config,
+      config: prepared,
       sourceFile: "file.csv",
       now: new Date("2024-01-06T00:00:00Z"),
       timeZone: "UTC",
