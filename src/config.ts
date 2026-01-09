@@ -1,3 +1,4 @@
+// Shared configuration for sheet names, schemas, and source mappings.
 export const SHEETS = {
   transactions: "Transactions",
   rules: "Rules",

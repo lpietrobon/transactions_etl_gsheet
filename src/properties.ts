@@ -1,3 +1,4 @@
+// Helpers for accessing Apps Script properties with validation.
 export function getRequiredProperty(name: string): string {
   const value = PropertiesService.getScriptProperties().getProperty(name);
   if (!value) {

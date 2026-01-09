@@ -1,3 +1,4 @@
+// Tests for core normalization helpers and rule matching.
 import { generateCompositeKey, normalizeHeader, normalizeHeaders, ruleMatches } from "../src/core";
 import type { Rule, TransactionRecord } from "../src/core";
 

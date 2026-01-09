@@ -1,3 +1,4 @@
+// CSV ingestion pipeline that reads Drive files and appends normalized rows.
 import { CONFIGS_BY_HEADER_HASH, SHEETS, TARGET_SCHEMA } from "./config";
 import { normalizeHeaders } from "./core";
 import { sendAlert } from "./alerts";

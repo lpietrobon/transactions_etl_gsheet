@@ -1,3 +1,4 @@
+// Parsing helpers for dates, currency, numbers, and rule regexes.
 export function parseDateFallback(value: string): Date | null {
   if (!value) return null;
   const fallback = new Date(value);

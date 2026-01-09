@@ -16,6 +16,28 @@ This project provides a spreadsheet-native ETL for ingesting bank CSV exports in
 - `tests/` – Jest tests for pure helper utilities.
 - `dist/` – Compiled Apps Script (generated).
 
+## Architecture
+
+```mermaid
+flowchart TD
+  A[Drive CSVs] -->|ingestCSVs| B[ingestion.ts]
+  B --> C[parsing.ts]
+  B --> D[ingestionTransform.ts]
+  D --> E[sheets.ts]
+  D --> F[core.ts]
+  E --> G[Transactions Sheet]
+  H[Rules Sheet] --> I[categorization.ts]
+  I --> G
+  J[Triggers & entrypoints] --> K[app.ts]
+  K -->|onEdit| I
+  K -->|manual runs| B
+  L[Config lookup] --> M[config.ts]
+  M --> B
+  M --> I
+  N[Alerts] --> O[alerts.ts]
+  B --> O
+```
+
 ## Setup
 
 1. Install dependencies:
@@ -48,11 +70,36 @@ npm run push
 
 ## Sheets expected
 
-### Transactions sheet
-A `Transactions` sheet with at least the headers defined in `TARGET_SCHEMA` (extra columns are preserved).
+Run `npm run docs:readme` to refresh the lists below from `src/config.ts`.
 
-### Rules sheet
-A `Rules` sheet with headers defined in `RULES_HEADERS` in `src/config.ts`.
+<!-- CONFIG_HEADERS_START -->
+### Transactions sheet headers
+
+- `Account Name`
+- `Institution`
+- `Date`
+- `Type`
+- `Description`
+- `Withdrawal`
+- `Deposit`
+- `Check Number`
+- `Category`
+- `Source File`
+- `Manual Category`
+- `Category by Rule`
+- `Matched Rule ID`
+
+### Rules sheet headers
+
+- `Rule ID`
+- `ON`
+- `Category`
+- `Description Regex`
+- `Account Regex`
+- `Type Regex`
+- `Min Amount`
+- `Max Amount`
+<!-- CONFIG_HEADERS_END -->
 
 ## Notes
 

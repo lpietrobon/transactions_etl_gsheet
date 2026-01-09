@@ -1,3 +1,4 @@
+// Alert email helpers for ingestion failures and configuration warnings.
 import { DEFAULT_ALERT_SUBJECT } from "./config";
 import { getConfigValue } from "./configSheet";
 

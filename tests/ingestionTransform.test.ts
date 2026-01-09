@@ -1,3 +1,4 @@
+// Tests for CSV ingestion transforms and record mapping.
 import { generateCompositeKey } from "../src/core";
 import { buildRowsFromCsvData, mapRowToRecord, prepareCsvConfig } from "../src/ingestionTransform";
 import type { CsvConfig } from "../src/ingestionTransform";
