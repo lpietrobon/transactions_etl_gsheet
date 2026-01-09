@@ -81,6 +81,58 @@ describe("mapRowToRecord", () => {
     expect(record.withdrawal).toBe(0);
     expect(record.deposit).toBe(20);
   });
+
+  it("maps withdrawal and deposit columns when both are present", () => {
+    const headers = ["Date", "Description", "Withdrawal", "Deposit"];
+    const sourceIndex = createHeaderIndex(headers);
+    const config: CsvConfig = {
+      dateFormat: "yyyy-MM-dd",
+      withdrawalColumn: "Withdrawal",
+      depositColumn: "Deposit",
+      signConvention: "positive_deposit",
+      columnMap: {
+        Date: "Date",
+        Description: "Description"
+      }
+    };
+
+    const prepared = prepareCsvConfig(config, sourceIndex);
+
+    const record = mapRowToRecord([
+      "2024-02-10",
+      "Payroll",
+      "45.25",
+      "1500.00"
+    ], prepared, "file.csv", new Date("2024-02-11T00:00:00Z"), "UTC");
+
+    expect(record.withdrawal).toBe(45.25);
+    expect(record.deposit).toBe(1500);
+  });
+
+  it("defaults missing withdrawal/deposit columns to zero", () => {
+    const headers = ["Date", "Description", "Withdrawal"];
+    const sourceIndex = createHeaderIndex(headers);
+    const config: CsvConfig = {
+      dateFormat: "yyyy-MM-dd",
+      withdrawalColumn: "Withdrawal",
+      signConvention: "positive_deposit",
+      columnMap: {
+        Date: "Date",
+        Description: "Description"
+      }
+    };
+
+    const prepared = prepareCsvConfig(config, sourceIndex);
+
+    const record = mapRowToRecord([
+      "2024-02-12",
+      "ATM",
+      "80.00"
+    ], prepared, "file.csv", new Date("2024-02-13T00:00:00Z"), "UTC");
+
+    expect(record.withdrawal).toBe(80);
+    expect(record.deposit).toBe(0);
+  });
 });
 
 describe("buildRowsFromCsvData", () => {
