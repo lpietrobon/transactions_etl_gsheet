@@ -1,21 +1,21 @@
 import { CONFIGS_BY_HEADER_HASH, SHEETS, TARGET_SCHEMA } from "./config";
 import { normalizeHeaders } from "./core";
 import { sendAlert } from "./alerts";
-import { buildRowsFromCsvData, computeHeaderHash } from "./ingestionTransform";
-import { getRequiredProperty } from "./properties";
+import { buildRowsFromCsvData, computeHeaderHash, prepareCsvConfig } from "./ingestionTransform";
+import { getConfigValue, getRequiredConfigValue } from "./configSheet";
 import {
   buildExistingKeys,
   createHeaderIndex,
   ensureSheetWithHeaders
 } from "./sheets";
 
-const SCRIPT_PROPERTIES = {
+const CONFIG_KEYS = {
   rawFolderId: "RAW_FOLDER_ID",
   archiveFolderId: "ARCHIVE_FOLDER_ID"
 };
 
 export function ingestCSVs(): void {
-  const rawFolderId = getRequiredProperty(SCRIPT_PROPERTIES.rawFolderId);
+  const rawFolderId = getRequiredConfigValue(CONFIG_KEYS.rawFolderId);
   const folder = DriveApp.getFolderById(rawFolderId);
   const files = folder.getFiles();
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -54,10 +54,10 @@ export function ingestCSVs(): void {
       }
 
       const sourceIndex = createHeaderIndex(rawHeaders);
+      const preparedConfig = prepareCsvConfig(config, sourceIndex);
       const { rowsToAppend: newRows, updatedKeys } = buildRowsFromCsvData({
         csvData,
-        sourceIndex,
-        config,
+        config: preparedConfig,
         sourceFile: name,
         now,
         timeZone,
@@ -83,9 +83,7 @@ export function ingestCSVs(): void {
 }
 
 function archiveFileIfConfigured(file: GoogleAppsScript.Drive.File): void {
-  const archiveFolderId = PropertiesService.getScriptProperties().getProperty(
-    SCRIPT_PROPERTIES.archiveFolderId
-  );
+  const archiveFolderId = getConfigValue(CONFIG_KEYS.archiveFolderId);
   if (!archiveFolderId) return;
   const archiveFolder = DriveApp.getFolderById(archiveFolderId);
   archiveFolder.addFile(file);

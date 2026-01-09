@@ -14,6 +14,13 @@ export type CsvConfig = {
   columnMap: Record<string, string>;
 };
 
+export type PreparedCsvConfig = CsvConfig & {
+  columnMapIndex: Record<string, number>;
+  amountColumnIndex?: number;
+  withdrawalColumnIndex?: number;
+  depositColumnIndex?: number;
+};
+
 export function computeHeaderHash(headers: string[]): string {
   const normalized = headers.map((header) => normalizeHeader(header));
   const joined = normalized.join("|");
@@ -21,19 +28,36 @@ export function computeHeaderHash(headers: string[]): string {
   return digest.map((byte) => (byte + 256).toString(16).slice(-2)).join("");
 }
 
+export function prepareCsvConfig(config: CsvConfig, sourceIndex: Record<string, number>): PreparedCsvConfig {
+  const columnMapIndex: Record<string, number> = {};
+
+  Object.entries(config.columnMap).forEach(([sourceHeader, targetHeader]) => {
+    const normalizedSource = normalizeHeader(sourceHeader);
+    const index = sourceIndex[normalizedSource];
+    if (index !== undefined) {
+      columnMapIndex[targetHeader] = index;
+    }
+  });
+
+  return {
+    ...config,
+    columnMapIndex,
+    amountColumnIndex: config.amountColumn ? sourceIndex[normalizeHeader(config.amountColumn)] : undefined,
+    withdrawalColumnIndex: config.withdrawalColumn ? sourceIndex[normalizeHeader(config.withdrawalColumn)] : undefined,
+    depositColumnIndex: config.depositColumn ? sourceIndex[normalizeHeader(config.depositColumn)] : undefined
+  };
+}
+
 export function mapRowToRecord(
   row: unknown[],
-  sourceIndex: Record<string, number>,
-  config: CsvConfig,
+  config: PreparedCsvConfig,
   sourceFile: string,
   now: Date,
   timeZone: string
 ): TransactionRecord {
   const mapped: Record<string, string> = {};
-  Object.entries(config.columnMap).forEach(([sourceHeader, targetHeader]) => {
-    const normalizedSource = normalizeHeader(sourceHeader);
-    const index = sourceIndex[normalizedSource];
-    mapped[targetHeader] = index !== undefined ? String(row[index] || "") : "";
+  Object.entries(config.columnMapIndex).forEach(([targetHeader, index]) => {
+    mapped[targetHeader] = String(row[index] || "");
   });
 
   const dateValue = mapped["Date"] || "";
@@ -49,16 +73,16 @@ export function mapRowToRecord(
 
   if (config.withdrawalColumn || config.depositColumn) {
     if (config.withdrawalColumn) {
-      const index = sourceIndex[normalizeHeader(config.withdrawalColumn)];
-      withdrawal = parseCurrency(String(row[index] || ""));
+      const index = config.withdrawalColumnIndex;
+      withdrawal = parseCurrency(String(index !== undefined ? row[index] : ""));
     }
     if (config.depositColumn) {
-      const index = sourceIndex[normalizeHeader(config.depositColumn)];
-      deposit = parseCurrency(String(row[index] || ""));
+      const index = config.depositColumnIndex;
+      deposit = parseCurrency(String(index !== undefined ? row[index] : ""));
     }
   } else if (config.amountColumn) {
-    const index = sourceIndex[normalizeHeader(config.amountColumn)];
-    const amount = parseCurrency(String(row[index] || ""));
+    const index = config.amountColumnIndex;
+    const amount = parseCurrency(String(index !== undefined ? row[index] : ""));
     if (config.signConvention === "positive_deposit") {
       if (amount >= 0) deposit = amount;
       else withdrawal = Math.abs(amount);
@@ -85,8 +109,7 @@ export function mapRowToRecord(
 
 export function buildRowsFromCsvData(params: {
   csvData: unknown[][];
-  sourceIndex: Record<string, number>;
-  config: CsvConfig;
+  config: PreparedCsvConfig;
   sourceFile: string;
   now: Date;
   timeZone: string;
@@ -96,7 +119,6 @@ export function buildRowsFromCsvData(params: {
 }): { rowsToAppend: unknown[][]; updatedKeys: Set<string> } {
   const {
     csvData,
-    sourceIndex,
     config,
     sourceFile,
     now,
@@ -114,7 +136,7 @@ export function buildRowsFromCsvData(params: {
     const row = csvData[i];
     if (row.every((cell) => String(cell || "").trim() === "")) continue;
 
-    const record = mapRowToRecord(row, sourceIndex, config, sourceFile, now, timeZone);
+    const record = mapRowToRecord(row, config, sourceFile, now, timeZone);
     const key = generateCompositeKey({
       date: record.date,
       withdrawal: record.withdrawal,

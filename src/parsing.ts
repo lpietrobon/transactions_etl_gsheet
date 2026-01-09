@@ -1,15 +1,19 @@
+export function parseDateFallback(value: string): Date | null {
+  if (!value) return null;
+  const fallback = new Date(value);
+  return Number.isNaN(fallback.getTime()) ? null : fallback;
+}
+
 export function parseDate(value: string, format: string, timeZone: string): Date | null {
   if (!value) return null;
   if (typeof Utilities !== "undefined" && Utilities.parseDate) {
     try {
       return Utilities.parseDate(value, timeZone, format);
     } catch (_error) {
-      const fallback = new Date(value);
-      return Number.isNaN(fallback.getTime()) ? null : fallback;
+      return parseDateFallback(value);
     }
   }
-  const fallback = new Date(value);
-  return Number.isNaN(fallback.getTime()) ? null : fallback;
+  return parseDateFallback(value);
 }
 
 export function formatDateForSheet(date: Date, timeZone: string): string {

@@ -1,6 +1,7 @@
 export const SHEETS = {
   transactions: "Transactions",
-  rules: "Rules"
+  rules: "Rules",
+  config: "Config"
 };
 
 export const TARGET_SCHEMA = [
@@ -18,6 +19,22 @@ export const TARGET_SCHEMA = [
   "Category by Rule",
   "Matched Rule ID"
 ];
+
+export const HEADER_KEYS = {
+  accountName: "account name",
+  institution: "institution",
+  date: "date",
+  type: "type",
+  description: "description",
+  withdrawal: "withdrawal",
+  deposit: "deposit",
+  checkNumber: "check number",
+  category: "category",
+  sourceFile: "source file",
+  manualCategory: "manual category",
+  categoryByRule: "category by rule",
+  matchedRuleId: "matched rule id"
+};
 
 export const RULES_HEADERS = [
   "Rule ID",
