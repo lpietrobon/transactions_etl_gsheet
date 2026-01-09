@@ -1,6 +1,7 @@
 export const SHEETS = {
   transactions: "Transactions",
-  rules: "Rules"
+  rules: "Rules",
+  config: "Config"
 };
 
 export const TARGET_SCHEMA = [
