@@ -14,23 +14,34 @@ export function applyCategorization(): void {
   const transactionSheet = ensureSheetWithHeaders(spreadsheet, SHEETS.transactions, TARGET_SCHEMA);
   const rulesSheet = ensureSheetWithHeaders(spreadsheet, SHEETS.rules, RULES_HEADERS);
 
+  const lastRow = transactionSheet.getLastRow();
+  if (lastRow <= 1) return;
+
   const transactionHeaders = transactionSheet.getRange(1, 1, 1, transactionSheet.getLastColumn()).getValues()[0];
   const headerIndex = createHeaderIndex(transactionHeaders);
-
   const rules = loadRules(rulesSheet);
-  const dataRange = transactionSheet.getDataRange();
-  const values = dataRange.getValues();
 
-  if (values.length <= 1) return;
+  applyCategorizationForRows(transactionSheet, headerIndex, rules, 2, lastRow - 1);
+}
 
+export function applyCategorizationForRows(
+  transactionSheet: GoogleAppsScript.Spreadsheet.Sheet,
+  headerIndex: Record<string, number>,
+  rules: Rule[],
+  startRow: number,
+  numRows: number
+): void {
+  if (numRows <= 0) return;
+
+  const transactionHeaders = transactionSheet.getRange(1, 1, 1, transactionSheet.getLastColumn()).getValues()[0];
   const categoryCol = ensureColumn(transactionSheet, AUDIT_COLUMNS.categoryByRule, transactionHeaders);
   const matchedRuleCol = ensureColumn(transactionSheet, AUDIT_COLUMNS.matchedRuleId, transactionHeaders);
 
+  const values = transactionSheet.getRange(startRow, 1, numRows, transactionSheet.getLastColumn()).getValues();
   const categoryUpdates: string[][] = [];
   const ruleIdUpdates: string[][] = [];
 
-  for (let rowIndex = 1; rowIndex < values.length; rowIndex += 1) {
-    const row = values[rowIndex];
+  for (const row of values) {
     const record = rowToRecord(row, headerIndex);
     const match = rules.find((rule) => ruleMatches(rule, record));
 
@@ -43,9 +54,28 @@ export function applyCategorization(): void {
     }
   }
 
-  const startRow = 2;
   transactionSheet.getRange(startRow, categoryCol, categoryUpdates.length, 1).setValues(categoryUpdates);
   transactionSheet.getRange(startRow, matchedRuleCol, ruleIdUpdates.length, 1).setValues(ruleIdUpdates);
+}
+
+export function applyCategorizationForTransactionRows(startRow: number, numRows: number): void {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const transactionSheet = ensureSheetWithHeaders(spreadsheet, SHEETS.transactions, TARGET_SCHEMA);
+  const rulesSheet = ensureSheetWithHeaders(spreadsheet, SHEETS.rules, RULES_HEADERS);
+
+  const lastRow = transactionSheet.getLastRow();
+  if (lastRow <= 1) return;
+
+  const safeStartRow = Math.max(2, startRow);
+  const maxRows = lastRow - safeStartRow + 1;
+  const safeNumRows = Math.min(numRows, maxRows);
+  if (safeNumRows <= 0) return;
+
+  const transactionHeaders = transactionSheet.getRange(1, 1, 1, transactionSheet.getLastColumn()).getValues()[0];
+  const headerIndex = createHeaderIndex(transactionHeaders);
+  const rules = loadRules(rulesSheet);
+
+  applyCategorizationForRows(transactionSheet, headerIndex, rules, safeStartRow, safeNumRows);
 }
 
 function loadRules(sheet: GoogleAppsScript.Spreadsheet.Sheet): Rule[] {
