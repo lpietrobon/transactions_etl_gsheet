@@ -1,7 +1,7 @@
 import { CONFIGS_BY_HEADER_HASH, SHEETS, TARGET_SCHEMA } from "./config";
 import { normalizeHeaders } from "./core";
 import { sendAlert } from "./alerts";
-import { buildRowsFromCsvData, computeHeaderHash } from "./ingestionTransform";
+import { buildRowsFromCsvData, computeHeaderHash, prepareCsvConfig } from "./ingestionTransform";
 import { getConfigValue, getRequiredConfigValue } from "./configSheet";
 import {
   buildExistingKeys,
@@ -54,10 +54,10 @@ export function ingestCSVs(): void {
       }
 
       const sourceIndex = createHeaderIndex(rawHeaders);
+      const preparedConfig = prepareCsvConfig(config, sourceIndex);
       const { rowsToAppend: newRows, updatedKeys } = buildRowsFromCsvData({
         csvData,
-        sourceIndex,
-        config,
+        config: preparedConfig,
         sourceFile: name,
         now,
         timeZone,
