@@ -1,3 +1,4 @@
+// Spreadsheet helpers for headers, table lookups, and row conversions.
 import { generateCompositeKey, normalizeHeader } from "./core";
 import { parseNumber } from "./parsing";
 import { HEADER_KEYS } from "./config";

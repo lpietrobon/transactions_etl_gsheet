@@ -6,6 +6,7 @@
   "//": "Unset http-proxy/https-proxy during tests to avoid npm's unknown env config warning.",
   "scripts": {
     "build": "tsc",
+    "docs:readme": "node scripts/update-readme.js",
     "test": "env -u http-proxy -u https-proxy jest",
     "push": "npm run build && clasp push"
   },

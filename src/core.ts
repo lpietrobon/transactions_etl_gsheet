@@ -1,3 +1,4 @@
+// Shared core types and helpers for normalization and rule matching.
 export type TransactionRecord = {
   accountName: string;
   institution: string;

@@ -1,3 +1,4 @@
+// Apps Script entrypoints and trigger wiring for ingestion and categorization.
 import { applyCategorization, applyCategorizationForTransactionRows } from "./categorization";
 import { ingestCSVs } from "./ingestion";
 import { SHEETS } from "./config";

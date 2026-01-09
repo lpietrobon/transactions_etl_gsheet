@@ -1,3 +1,4 @@
+// Transforms CSV rows into normalized transaction records and sheet rows.
 import { generateCompositeKey, normalizeHeader } from "./core";
 import { formatDateForSheet, parseCurrency, parseDate } from "./parsing";
 import { buildRowFromRecord, Table } from "./sheets";

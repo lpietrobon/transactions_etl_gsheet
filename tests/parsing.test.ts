@@ -1,3 +1,4 @@
+// Tests for parsing helpers used by ingestion and categorization.
 import { buildRegex, formatDateForSheet, parseCurrency, parseDate, parseNumber } from "../src/parsing";
 
 describe("parseCurrency", () => {

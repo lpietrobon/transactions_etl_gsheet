@@ -1,3 +1,4 @@
+// Rule-based categorization for transactions using the Rules sheet.
 import { RULES_HEADERS, SHEETS, TARGET_SCHEMA } from "./config";
 import { ruleMatches } from "./core";
 import { buildRegex, parseNumber } from "./parsing";

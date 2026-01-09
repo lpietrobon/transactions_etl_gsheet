@@ -1,3 +1,4 @@
+// Reads and validates key/value configuration stored in the Config sheet.
 import { SHEETS } from "./config";
 import { ensureSheetWithHeaders } from "./sheets";
 
