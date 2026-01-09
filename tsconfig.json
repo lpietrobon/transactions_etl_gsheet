@@ -8,7 +8,7 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["google-apps-script"],
+    "types": ["google-apps-script", "jest"],
     "declaration": false
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"],
