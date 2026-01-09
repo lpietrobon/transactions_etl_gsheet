@@ -1,5 +1,6 @@
 import { generateCompositeKey } from "../src/core";
 import { buildRowsFromCsvData, mapRowToRecord } from "../src/ingestionTransform";
+import type { CsvConfig } from "../src/ingestionTransform";
 import { TARGET_SCHEMA } from "../src/config";
 import { createHeaderIndex } from "../src/sheets";
 
@@ -7,7 +8,7 @@ describe("mapRowToRecord", () => {
   it("maps amounts using positive_deposit convention", () => {
     const headers = ["Date", "Description", "Amount"];
     const sourceIndex = createHeaderIndex(headers);
-    const config = {
+    const config: CsvConfig = {
       dateFormat: "yyyy-MM-dd",
       amountColumn: "Amount",
       signConvention: "positive_deposit",
@@ -31,7 +32,7 @@ describe("mapRowToRecord", () => {
   it("maps amounts using positive_withdrawal convention", () => {
     const headers = ["Date", "Description", "Amount"];
     const sourceIndex = createHeaderIndex(headers);
-    const config = {
+    const config: CsvConfig = {
       dateFormat: "yyyy-MM-dd",
       amountColumn: "Amount",
       signConvention: "positive_withdrawal",
@@ -60,7 +61,7 @@ describe("buildRowsFromCsvData", () => {
       ["2024-01-05", "Coffee", "-5.00"]
     ];
     const sourceIndex = createHeaderIndex(csvData[0] as string[]);
-    const config = {
+    const config: CsvConfig = {
       dateFormat: "yyyy-MM-dd",
       amountColumn: "Amount",
       signConvention: "positive_deposit",
@@ -94,7 +95,7 @@ describe("buildRowsFromCsvData", () => {
       ["2024-01-05", "Coffee", "-5.00"]
     ];
     const sourceIndex = createHeaderIndex(csvData[0] as string[]);
-    const config = {
+    const config: CsvConfig = {
       dateFormat: "yyyy-MM-dd",
       amountColumn: "Amount",
       signConvention: "positive_deposit",

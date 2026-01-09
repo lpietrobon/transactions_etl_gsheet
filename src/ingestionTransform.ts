@@ -124,7 +124,7 @@ export function buildRowsFromCsvData(params: {
       type: record.type
     });
 
-    if (updatedKeys.has(key)) continue;
+    if (existingKeys.has(key)) continue;
     if (seenKeysInFile.has(key)) {
       record.description = `[Possible Duplicate] ${record.description}`;
     }
