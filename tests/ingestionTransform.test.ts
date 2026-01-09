@@ -81,6 +81,38 @@ describe("mapRowToRecord", () => {
     expect(record.withdrawal).toBe(0);
     expect(record.deposit).toBe(20);
   });
+
+  it("uses empty strings for missing mapped headers and ignores extra columns", () => {
+    const csvData = [
+      ["Date", "Amount", "Extra Column"],
+      ["2024-02-10", "-15.00", "ignored value"]
+    ];
+    const sourceIndex = createHeaderIndex(csvData[0] as string[]);
+    const config: CsvConfig = {
+      dateFormat: "yyyy-MM-dd",
+      amountColumn: "Amount",
+      signConvention: "positive_deposit",
+      columnMap: {
+        Date: "Date",
+        Description: "Description"
+      }
+    };
+
+    const prepared = prepareCsvConfig(config, sourceIndex);
+
+    const record = mapRowToRecord(
+      csvData[1],
+      prepared,
+      "file.csv",
+      new Date("2024-02-11T00:00:00Z"),
+      "UTC"
+    );
+
+    expect(record.description).toBe("");
+    expect(record.date).toBe("2024-02-10");
+    expect(record.withdrawal).toBe(15);
+    expect(record.category).toBe("");
+  });
 });
 
 describe("buildRowsFromCsvData", () => {
