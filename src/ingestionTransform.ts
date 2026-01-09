@@ -1,6 +1,6 @@
 import { generateCompositeKey, normalizeHeader } from "./core";
 import { formatDateForSheet, parseCurrency, parseDate } from "./parsing";
-import { buildRowFromRecord } from "./sheets";
+import { buildRowFromRecord, Table } from "./sheets";
 import type { TransactionRecord } from "./core";
 
 export type CsvConfig = {
@@ -114,8 +114,7 @@ export function buildRowsFromCsvData(params: {
   now: Date;
   timeZone: string;
   existingKeys: Set<string>;
-  headerRow: string[];
-  headerIndex: Record<string, number>;
+  table: Table;
 }): { rowsToAppend: unknown[][]; updatedKeys: Set<string> } {
   const {
     csvData,
@@ -124,8 +123,7 @@ export function buildRowsFromCsvData(params: {
     now,
     timeZone,
     existingKeys,
-    headerRow,
-    headerIndex
+    table
   } = params;
 
   const rowsToAppend: unknown[][] = [];
@@ -152,7 +150,7 @@ export function buildRowsFromCsvData(params: {
     }
     seenKeysInFile.add(key);
 
-    rowsToAppend.push(buildRowFromRecord(record, headerRow, headerIndex));
+    rowsToAppend.push(buildRowFromRecord(record, table));
     updatedKeys.add(key);
   }
 

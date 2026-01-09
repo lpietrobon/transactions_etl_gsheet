@@ -6,7 +6,8 @@ import { getConfigValue, getRequiredConfigValue } from "./configSheet";
 import {
   buildExistingKeys,
   createHeaderIndex,
-  ensureSheetWithHeaders
+  ensureSheetWithHeaders,
+  Table
 } from "./sheets";
 
 const CONFIG_KEYS = {
@@ -21,9 +22,8 @@ export function ingestCSVs(): void {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   const transactionSheet = ensureSheetWithHeaders(spreadsheet, SHEETS.transactions, TARGET_SCHEMA);
 
-  const headerRow = transactionSheet.getRange(1, 1, 1, transactionSheet.getLastColumn()).getValues()[0];
-  const headerIndex = createHeaderIndex(headerRow);
-  let existingKeys = buildExistingKeys(transactionSheet, headerRow);
+  const table = Table.fromSheet(transactionSheet);
+  let existingKeys = buildExistingKeys(transactionSheet, table);
 
   const rowsToAppend: unknown[][] = [];
   const now = new Date();
@@ -62,8 +62,7 @@ export function ingestCSVs(): void {
         now,
         timeZone,
         existingKeys,
-        headerRow,
-        headerIndex
+        table
       });
 
       rowsToAppend.push(...newRows);
@@ -78,7 +77,7 @@ export function ingestCSVs(): void {
 
   if (rowsToAppend.length > 0) {
     const startRow = transactionSheet.getLastRow() + 1;
-    transactionSheet.getRange(startRow, 1, rowsToAppend.length, headerRow.length).setValues(rowsToAppend);
+    transactionSheet.getRange(startRow, 1, rowsToAppend.length, table.headers.length).setValues(rowsToAppend);
   }
 }
 
