@@ -1,7 +1,7 @@
 import { RULES_HEADERS, SHEETS, TARGET_SCHEMA } from "./config";
-import { normalizeWhitespace, ruleMatches } from "./core";
+import { ruleMatches } from "./core";
 import { buildRegex, parseNumber } from "./parsing";
-import { ensureColumn, ensureSheetWithHeaders, createHeaderIndex, rowToRecord } from "./sheets";
+import { ensureSheetWithHeaders, rowToRecord, Table } from "./sheets";
 import type { Rule } from "./core";
 
 const AUDIT_COLUMNS = {
@@ -17,32 +17,30 @@ export function applyCategorization(): void {
   const lastRow = transactionSheet.getLastRow();
   if (lastRow <= 1) return;
 
-  const transactionHeaders = transactionSheet.getRange(1, 1, 1, transactionSheet.getLastColumn()).getValues()[0];
-  const headerIndex = createHeaderIndex(transactionHeaders);
+  const transactionTable = Table.fromSheet(transactionSheet);
   const rules = loadRules(rulesSheet);
 
-  applyCategorizationForRows(transactionSheet, headerIndex, rules, 2, lastRow - 1);
+  applyCategorizationForRows(transactionSheet, transactionTable, rules, 2, lastRow - 1);
 }
 
 export function applyCategorizationForRows(
   transactionSheet: GoogleAppsScript.Spreadsheet.Sheet,
-  headerIndex: Record<string, number>,
+  transactionTable: Table,
   rules: Rule[],
   startRow: number,
   numRows: number
 ): void {
   if (numRows <= 0) return;
 
-  const transactionHeaders = transactionSheet.getRange(1, 1, 1, transactionSheet.getLastColumn()).getValues()[0];
-  const categoryCol = ensureColumn(transactionSheet, AUDIT_COLUMNS.categoryByRule, transactionHeaders);
-  const matchedRuleCol = ensureColumn(transactionSheet, AUDIT_COLUMNS.matchedRuleId, transactionHeaders);
+  const categoryCol = transactionTable.ensureColumn(transactionSheet, AUDIT_COLUMNS.categoryByRule);
+  const matchedRuleCol = transactionTable.ensureColumn(transactionSheet, AUDIT_COLUMNS.matchedRuleId);
 
   const values = transactionSheet.getRange(startRow, 1, numRows, transactionSheet.getLastColumn()).getValues();
   const categoryUpdates: string[][] = [];
   const ruleIdUpdates: string[][] = [];
 
   for (const row of values) {
-    const record = rowToRecord(row, headerIndex);
+    const record = rowToRecord(row, transactionTable);
     const match = rules.find((rule) => ruleMatches(rule, record));
 
     if (match) {
@@ -71,32 +69,31 @@ export function applyCategorizationForTransactionRows(startRow: number, numRows:
   const safeNumRows = Math.min(numRows, maxRows);
   if (safeNumRows <= 0) return;
 
-  const transactionHeaders = transactionSheet.getRange(1, 1, 1, transactionSheet.getLastColumn()).getValues()[0];
-  const headerIndex = createHeaderIndex(transactionHeaders);
+  const transactionTable = Table.fromSheet(transactionSheet);
   const rules = loadRules(rulesSheet);
 
-  applyCategorizationForRows(transactionSheet, headerIndex, rules, safeStartRow, safeNumRows);
+  applyCategorizationForRows(transactionSheet, transactionTable, rules, safeStartRow, safeNumRows);
 }
 
 function loadRules(sheet: GoogleAppsScript.Spreadsheet.Sheet): Rule[] {
   const values = sheet.getDataRange().getValues();
   if (values.length <= 1) return [];
-  const headers = values[0].map((header) => normalizeWhitespace(String(header || "")));
-  const index = createHeaderIndex(headers);
+  const headers = values[0].map((header) => String(header || ""));
+  const table = new Table(headers);
 
   const rules: Rule[] = [];
   for (let i = 1; i < values.length; i += 1) {
     const row = values[i];
-    const id = String(row[index["rule id"]] || "").trim();
+    const id = String(row[table.getIndex("rule id")] || "").trim();
     if (!id) continue;
 
-    const enabled = String(row[index["on"]] || "").toLowerCase() === "on";
-    const category = String(row[index["category"]] || "").trim();
-    const descriptionRegex = buildRegex(row[index["description regex"]]);
-    const accountRegex = buildRegex(row[index["account regex"]]);
-    const typeRegex = buildRegex(row[index["type regex"]]);
-    const minAmount = parseNumber(row[index["min amount"]]);
-    const maxAmount = parseNumber(row[index["max amount"]]);
+    const enabled = String(row[table.getIndex("on")] || "").toLowerCase() === "on";
+    const category = String(row[table.getIndex("category")] || "").trim();
+    const descriptionRegex = buildRegex(row[table.getIndex("description regex")]);
+    const accountRegex = buildRegex(row[table.getIndex("account regex")]);
+    const typeRegex = buildRegex(row[table.getIndex("type regex")]);
+    const minAmount = parseNumber(row[table.getIndex("min amount")]);
+    const maxAmount = parseNumber(row[table.getIndex("max amount")]);
 
     rules.push({
       id,
