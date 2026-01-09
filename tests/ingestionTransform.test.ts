@@ -2,13 +2,13 @@ import { generateCompositeKey } from "../src/core";
 import { buildRowsFromCsvData, mapRowToRecord, prepareCsvConfig } from "../src/ingestionTransform";
 import type { CsvConfig } from "../src/ingestionTransform";
 import { TARGET_SCHEMA } from "../src/config";
-import { createHeaderIndex } from "../src/sheets";
+import { createHeaderIndex, Table } from "../src/sheets";
 
 describe("prepareCsvConfig", () => {
   it("builds column index mappings and amount indices", () => {
     const headers = ["Date", "Description", "Amount", "Deposit"];
     const sourceIndex = createHeaderIndex(headers);
-    const config = {
+    const config: CsvConfig = {
       dateFormat: "yyyy-MM-dd",
       amountColumn: "Amount",
       depositColumn: "Deposit",
@@ -102,7 +102,7 @@ describe("buildRowsFromCsvData", () => {
     };
     const prepared = prepareCsvConfig(config, sourceIndex);
 
-    const headerIndex = createHeaderIndex(TARGET_SCHEMA);
+    const table = new Table(TARGET_SCHEMA);
     const result = buildRowsFromCsvData({
       csvData,
       config: prepared,
@@ -110,12 +110,11 @@ describe("buildRowsFromCsvData", () => {
       now: new Date("2024-01-06T00:00:00Z"),
       timeZone: "UTC",
       existingKeys: new Set(),
-      headerRow: TARGET_SCHEMA,
-      headerIndex
+      table
     });
 
     expect(result.rowsToAppend).toHaveLength(2);
-    const descriptionIndex = headerIndex["description"];
+    const descriptionIndex = table.headerIndex["description"];
     expect(result.rowsToAppend[1][descriptionIndex]).toContain("[Possible Duplicate]");
   });
 
@@ -145,7 +144,7 @@ describe("buildRowsFromCsvData", () => {
       type: ""
     });
 
-    const headerIndex = createHeaderIndex(TARGET_SCHEMA);
+    const table = new Table(TARGET_SCHEMA);
     const result = buildRowsFromCsvData({
       csvData,
       config: prepared,
@@ -153,8 +152,7 @@ describe("buildRowsFromCsvData", () => {
       now: new Date("2024-01-06T00:00:00Z"),
       timeZone: "UTC",
       existingKeys: new Set([recordKey]),
-      headerRow: TARGET_SCHEMA,
-      headerIndex
+      table
     });
 
     expect(result.rowsToAppend).toHaveLength(0);
