@@ -37,6 +37,23 @@ describe("parseDate", () => {
   it("returns null for invalid dates", () => {
     expect(parseDate("not-a-date", "yyyy-MM-dd", "UTC")).toBeNull();
   });
+
+  it("falls back to native Date parsing when Utilities.parseDate throws", () => {
+    const originalUtilities = (globalThis as { Utilities?: unknown }).Utilities;
+    (globalThis as { Utilities?: unknown }).Utilities = {
+      parseDate: () => {
+        throw new Error("parse failed");
+      },
+    };
+
+    try {
+      const parsed = parseDate("2024-03-10", "yyyy-MM-dd", "UTC");
+      expect(parsed).not.toBeNull();
+      expect(parseDate("still-bad", "yyyy-MM-dd", "UTC")).toBeNull();
+    } finally {
+      (globalThis as { Utilities?: unknown }).Utilities = originalUtilities;
+    }
+  });
 });
 
 describe("buildRegex", () => {
